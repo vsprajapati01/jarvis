@@ -238,7 +238,10 @@ def listen_voice():
 
 def main():
     text_mode = "--text" in sys.argv
-    speak(f"Hello, I am {CONFIG['name']}. Say {WAKE_WORD} to wake me, or type --text mode commands. Say help for commands.")
+    if text_mode:
+        speak(f"Hello, I am {CONFIG['name']}. Type a command, or type help. In text mode, type only - speaking will not work here. For voice, run: python jarvis.py")
+    else:
+        speak(f"Hello, I am {CONFIG['name']}. Say {WAKE_WORD} to wake me, then say a command. Say help for commands.")
     if text_mode:
         while True:
             try:
