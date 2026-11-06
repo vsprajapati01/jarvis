@@ -1,3 +1,5 @@
 pyttsx3>=2.90
 SpeechRecognition>=3.10
 PyAudio>=0.2.14
+Pillow>=10.0
+# PyInstaller is only needed on Windows to build the .exe: pip install pyinstaller

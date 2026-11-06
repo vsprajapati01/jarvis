@@ -44,6 +44,28 @@ On Linux, PyAudio may need system packages first:
 - Add a command: add a branch in `handle_command()` in `jarvis.py`
 - Add an app: add it to the `targets` table in `open_app()` in `jarvis.py`
 
+## Desktop app (v2) — window with logo, app manager, PC controls
+
+```bash
+pip install -r requirements.txt
+python jarvis_gui.py
+```
+
+Left sidebar has the lion logo, a Listen button, timer and weather shortcuts.
+Type commands in the box, or press Listen and speak. Apps section opens and
+closes Chrome, Edge, VS Code, Notepad, Calculator, File Explorer, Paint,
+Task Manager, Settings and Spotify. PC controls do volume up/down/mute,
+lock, sleep, brightness, shutdown and restart (shutdown/restart ask first).
+
+Build a Windows .exe (must be built on Windows):
+
+```bat
+build_exe.bat
+```
+
+That makes `dist\Jarvis.exe` with the lion logo as its icon. Double-click
+it to run, no Command Prompt needed.
+
 ## What is next (v2 ideas)
 
 - Morning briefing (calendar, weather, jobs to apply for)
