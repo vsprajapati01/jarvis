@@ -110,6 +110,22 @@ class Overlay:
         self._animate()
         # Always-listening loop in the background, so the orb never freezes.
         threading.Thread(target=self._listen_loop, daemon=True).start()
+        # Task queue from Pax: check GitHub every 60 seconds for a new
+        # task you sent me in chat. Safe commands only, see task_queue.py.
+        threading.Thread(target=self._task_loop, daemon=True).start()
+
+    def _task_loop(self):
+        import time
+        try:
+            from task_queue import check_for_new_tasks
+        except Exception:
+            return
+        while True:
+            try:
+                check_for_new_tasks(handle_command, speak)
+            except Exception:
+                pass
+            time.sleep(60)
 
     # -- orb appearance -------------------------------------------------
     def set_state(self, state, text=""):

@@ -56,6 +56,19 @@ pulses while it listens, then say your command. Double-click the orb
 to open the full window, drag it anywhere, right-click for Show / Quit.
 Say "show window" to open the full app by voice.
 
+## Pass a task from Pax to Jarvis (task queue)
+
+You tell Pax a task in chat, Pax writes it to `tasks.json` in this
+repo, and the orb picks it up within about 60 seconds and does it,
+while your PC is on and the orb is running. It is a relay, not live
+control, so there is a short delay.
+
+Safe through the queue only: time, weather, open/search, find
+companies, research, create Word/PDF, note, timer, morning workflow.
+The queue can never submit a job, send a message, pay, delete,
+shut down, sign in, or share personal details. Those still need
+your one-time permission on your PC.
+
 ## Desktop app (v2) — window with logo, app manager, PC controls
 
 ```bash
