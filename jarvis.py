@@ -194,7 +194,7 @@ def handle_command(command):
         speak("Goodbye.")
         return False
     if cmd == "help":
-        speak("Try: time, date, open chrome, open youtube.com, search python, find companies hiring data analysts in USA, research Anthropic residency program, create word my notes : hello, make pdf my notes : hello, check mail, weather Gainesville, timer 5 minutes, remind me to drink water in 10 minutes, or note buy milk.")
+        speak("Try: time, date, open chrome, open youtube.com, search python, find companies hiring data analysts in USA, research Anthropic residency program, create word my notes : hello, make pdf my notes : hello, check mail, weather Gainesville, timer 5 minutes, remind me to drink water in 10 minutes, or note buy milk. Or just ask me anything - ask what is machine learning - and my Gemini brain will answer.")
         return True
     # Timer / reminder first: "timer" contains "time", so check it before time.
     if cmd.startswith("timer"):
@@ -312,7 +312,22 @@ def handle_command(command):
         city = command.strip()[7:].strip() or "Gainesville"
         speak(get_weather(city))
         return True
-    speak("I did not understand that. Say help to hear what I can do.")
+    if cmd.startswith("ask ") or cmd.startswith("chat "):
+        question = command.strip().split(" ", 1)[1].strip()
+        try:
+            from brain import ask_gemini
+            answer, err = ask_gemini(question)
+            speak(err or answer)
+        except Exception as e:
+            speak(f"Brain unavailable: {e}")
+        return True
+    # Anything else: ask the Gemini brain, if it is set up.
+    try:
+        from brain import ask_gemini
+        answer, err = ask_gemini(command.strip())
+        speak(err or answer)
+    except Exception:
+        speak("I did not understand that. Say help to hear what I can do.")
     return True
 
 

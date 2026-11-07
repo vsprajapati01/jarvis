@@ -56,6 +56,18 @@ pulses while it listens, then say your command. Double-click the orb
 to open the full window, drag it anywhere, right-click for Show / Quit.
 Say "show window" to open the full app by voice.
 
+## Gemini brain (v6) — ask anything, free
+
+Jarvis now has a brain: Google Gemini, free API.
+1. Get a free key at https://aistudio.google.com — Get API key, Create API key.
+2. In the jarvis folder, copy `.env.example` to `.env` and replace
+   `PASTE_YOUR_KEY_HERE` with your key. Never paste the key in chat,
+   and never push `.env` — it is in `.gitignore`.
+3. Restart the orb or the full app. Then just ask anything:
+   `ask what is machine learning`, or any question Jarvis does not
+   recognise as a local command. Local commands (time, weather, open,
+   find companies...) still run locally first.
+
 ## Pass a task from Pax to Jarvis (task queue)
 
 You tell Pax a task in chat, Pax writes it to `tasks.json` in this

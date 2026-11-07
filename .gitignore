@@ -3,3 +3,7 @@ __pycache__/
 .venv/
 venv/
 notes.txt
+.env
+tasks_done.json
+companies-*.csv
+research-*.md
