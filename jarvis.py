@@ -254,6 +254,20 @@ def handle_command(command):
         except Exception as e:
             speak(f"Could not make the PDF: {e}")
         return True
+    if cmd.startswith("open gods eye") or cmd.startswith("show gods eye"):
+        try:
+            from gods_eye import start_gods_eye
+            speak(start_gods_eye())
+        except Exception as e:
+            speak(f"Could not open God's Eye View: {e}")
+        return True
+    if cmd.startswith("show flights") or cmd.startswith("show ships") or cmd.startswith("show satellites") or cmd.startswith("show earthquakes"):
+        try:
+            from gods_eye import open_gods_eye
+            speak(open_gods_eye() + " Pick that layer in the globe once it loads.")
+        except Exception as e:
+            speak(f"Could not open God's Eye View: {e}")
+        return True
     if cmd.startswith("research "):
         topic = command.strip()[9:].strip()
         try:
