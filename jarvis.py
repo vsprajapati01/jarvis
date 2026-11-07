@@ -84,6 +84,25 @@ def speak(text):
         pass
 
 
+def open_website(target):
+    """Open a website or search in the user's own Chrome, with their
+    logged-in profile. That is the safe way Jarvis 'logs in' - it never
+    stores or types a password. If you are already signed in to a site
+    in Chrome (Gmail, LinkedIn, YouTube...), it opens signed in.
+    If you are not signed in there, Chrome shows that site's normal
+    sign-in page and you sign in yourself, once, in Chrome."""
+    target = target.strip()
+    if not target:
+        return "Say it like: open youtube.com, or open gmail."
+    if " " in target or "." not in target:
+        # A phrase, not a site - search it instead.
+        webbrowser.open("https://www.google.com/search?q=" + urllib.parse.quote(target))
+        return f"Searching for {target}."
+    url = target if target.startswith(("http://", "https://")) else "https://" + target
+    webbrowser.open(url)
+    return f"Opening {url} in your browser."
+
+
 def open_app(app):
     system = platform.system()
     targets = {
@@ -175,7 +194,7 @@ def handle_command(command):
         speak("Goodbye.")
         return False
     if cmd == "help":
-        speak("Try: time, date, open chrome, search python, weather Gainesville, timer 5 minutes, remind me to drink water in 10 minutes, or note buy milk.")
+        speak("Try: time, date, open chrome, open youtube.com, go to gmail.com, search python, weather Gainesville, timer 5 minutes, remind me to drink water in 10 minutes, or note buy milk.")
         return True
     # Timer / reminder first: "timer" contains "time", so check it before time.
     if cmd.startswith("timer"):
@@ -208,7 +227,15 @@ def handle_command(command):
         speak("Today is " + datetime.datetime.now().strftime("%A, %B %d, %Y") + ".")
         return True
     if cmd.startswith("open "):
-        speak(open_app(cmd[5:].strip()))
+        rest = cmd[5:].strip()
+        # "open chrome" / "open vs code" are apps; anything else is a website.
+        if rest in ("chrome", "vs code", "notepad", "calculator"):
+            speak(open_app(rest))
+        else:
+            speak(open_website(command.strip()[5:].strip()))
+        return True
+    if cmd.startswith("go to "):
+        speak(open_website(command.strip()[6:].strip()))
         return True
     if cmd.startswith("search "):
         query = command.strip()[7:]
