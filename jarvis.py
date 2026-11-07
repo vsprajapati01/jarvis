@@ -194,7 +194,7 @@ def handle_command(command):
         speak("Goodbye.")
         return False
     if cmd == "help":
-        speak("Try: time, date, open chrome, open youtube.com, go to gmail.com, search python, find companies hiring data analysts in USA, weather Gainesville, timer 5 minutes, remind me to drink water in 10 minutes, or note buy milk.")
+        speak("Try: time, date, open chrome, open youtube.com, search python, find companies hiring data analysts in USA, research Anthropic residency program, create word my notes : hello, make pdf my notes : hello, check mail, weather Gainesville, timer 5 minutes, remind me to drink water in 10 minutes, or note buy milk.")
         return True
     # Timer / reminder first: "timer" contains "time", so check it before time.
     if cmd.startswith("timer"):
@@ -231,6 +231,40 @@ def handle_command(command):
                 speak(format_list(results) + f" Saved to {os.path.basename(filename)}.")
         except Exception as e:
             speak(f"Could not search right now: {e}")
+        return True
+    if cmd.startswith("create word ") or cmd.startswith("make word "):
+        rest = command.strip().split(" ", 2)[2].strip() if len(command.strip().split(" ", 2)) > 2 else ""
+        title, _, text = rest.partition(":")
+        title, text = title.strip(), (text.strip() or "Created by Jarvis.")
+        try:
+            from create_docs import make_word
+            filename, err = make_word(title, text)
+            speak(err or f"Word file saved: {os.path.basename(filename)}")
+        except Exception as e:
+            speak(f"Could not make the Word file: {e}")
+        return True
+    if cmd.startswith("make pdf ") or cmd.startswith("create pdf "):
+        rest = command.strip().split(" ", 2)[2].strip() if len(command.strip().split(" ", 2)) > 2 else ""
+        title, _, text = rest.partition(":")
+        title, text = title.strip(), (text.strip() or "Created by Jarvis.")
+        try:
+            from create_docs import make_pdf
+            filename, err = make_pdf(title, text)
+            speak(err or f"PDF saved: {os.path.basename(filename)}")
+        except Exception as e:
+            speak(f"Could not make the PDF: {e}")
+        return True
+    if cmd.startswith("research "):
+        topic = command.strip()[9:].strip()
+        try:
+            from research import research as do_research
+            summary, _filename, err = do_research(topic)
+            speak(err or summary)
+        except Exception as e:
+            speak(f"Could not research that right now: {e}")
+        return True
+    if cmd.startswith("check mail") or cmd.startswith("check my mail"):
+        speak("Checking mail needs your Gmail connected to Jarvis first, with Google sign-in, not your password. I have not set that up yet. For now, say open gmail.com and I will open your inbox in Chrome, signed in if you already are there.")
         return True
     if cmd.startswith("note "):
         note = command.strip()[5:]
