@@ -194,7 +194,7 @@ def handle_command(command):
         speak("Goodbye.")
         return False
     if cmd == "help":
-        speak("Try: time, date, open chrome, open youtube.com, go to gmail.com, search python, weather Gainesville, timer 5 minutes, remind me to drink water in 10 minutes, or note buy milk.")
+        speak("Try: time, date, open chrome, open youtube.com, go to gmail.com, search python, find companies hiring data analysts in USA, weather Gainesville, timer 5 minutes, remind me to drink water in 10 minutes, or note buy milk.")
         return True
     # Timer / reminder first: "timer" contains "time", so check it before time.
     if cmd.startswith("timer"):
@@ -213,6 +213,24 @@ def handle_command(command):
             speak(f"Okay, I will remind you to {thing}.")
         else:
             speak("Say it like: remind me to drink water in 10 minutes.")
+        return True
+    if cmd.startswith("find companies") or cmd.startswith("find jobs"):
+        query = command.strip()
+        # Drop the "find companies" / "find jobs" prefix, keep the rest.
+        query = re.sub(r"^find (companies|jobs)\s*", "", query, flags=re.I).strip()
+        if not query:
+            speak("Tell me what to find, like: find companies hiring data analysts in USA")
+            return True
+        speak(f"Searching for {query}. Making a list for you.")
+        try:
+            from find_companies import find_companies, format_list
+            results, filename, err = find_companies(query)
+            if err:
+                speak(err)
+            else:
+                speak(format_list(results) + f" Saved to {os.path.basename(filename)}.")
+        except Exception as e:
+            speak(f"Could not search right now: {e}")
         return True
     if cmd.startswith("note "):
         note = command.strip()[5:]
