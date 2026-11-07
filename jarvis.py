@@ -9,6 +9,8 @@ Text mode (no mic needed, good for testing):
     python jarvis.py --text
 
 Say "jarvis" first in voice mode, then a command.
+Or clap twice:  python jarvis.py --clap
+  Double clap runs the morning workflow, then listens for a command.
 In text mode, just type the command.
 
 Commands:
@@ -238,6 +240,7 @@ def listen_voice():
 
 def main():
     text_mode = "--text" in sys.argv
+    clap_mode = "--clap" in sys.argv
     if text_mode:
         speak(f"Hello, I am {CONFIG['name']}. Type a command, or type help. In text mode, type only - speaking will not work here. For voice, run: python jarvis.py")
     else:
@@ -256,6 +259,14 @@ def main():
         print("Install voice support first: pip install -r requirements.txt")
         print("Or run text mode: python jarvis.py --text")
         return
+    if clap_mode:
+        try:
+            from clap_detector import start_clap_detector
+            from morning_workflow import run_morning_workflow
+            print("Double-clap mode on. Clap twice for the morning workflow.")
+            start_clap_detector(run_morning_workflow)
+        except Exception as e:
+            print(f"Clap mode unavailable: {e}. Falling back to wake word.")
     while True:
         heard = listen_voice()
         if heard is None:
