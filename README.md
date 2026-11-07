@@ -44,6 +44,18 @@ On Linux, PyAudio may need system packages first:
 - Add a command: add a branch in `handle_command()` in `jarvis.py`
 - Add an app: add it to the `targets` table in `open_app()` in `jarvis.py`
 
+## Floating orb (v5) — no big window, always listening
+
+```bash
+python jarvis_overlay.py
+```
+
+A small glowing orb sits on the right edge of your screen, always on
+top. No clicking needed: just say "jarvis", the orb glows bright and
+pulses while it listens, then say your command. Double-click the orb
+to open the full window, drag it anywhere, right-click for Show / Quit.
+Say "show window" to open the full app by voice.
+
 ## Desktop app (v2) — window with logo, app manager, PC controls
 
 ```bash
