@@ -34,8 +34,8 @@ CRITICAL = [
 
 def is_critical(action):
     return any(word in action.lower() for word in
-               ["submit", "send", "pay", "delete", "shutdown", "restart",
-                "sign in", "login", "share my"])
+               ["submit", "send", "pay", "delete", "shutdown", "shut down",
+                "restart", "sign in", "login", "share my"])
 
 
 def ask_permission(action, input_fn=input):

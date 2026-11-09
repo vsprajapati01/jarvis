@@ -1,19 +1,23 @@
 #!/usr/bin/env python3
 """
-Jarvis v1 - local-first voice assistant for PC.
-Runs on Windows, macOS and Linux. No API key needed for v1.
+Jarvis v8 - local-first voice assistant for PC, with an agent loop.
+Runs on Windows, macOS and Linux. No API key needed for local tasks.
 
 Voice mode (needs a microphone):
     python jarvis.py
 Text mode (no mic needed, good for testing):
     python jarvis.py --text
 
-Say "jarvis" first in voice mode, then a command.
+Talk normally - you do NOT need a specific command. Say "jarvis"
+first in voice mode, then just talk: "open youtube for me",
+"research the best data analyst certifications", "how do I learn
+SQL?", "set a timer for 5 minutes". The agent loop (agent.py)
+decides: chat, research first, or run a task on your PC.
 Or clap twice:  python jarvis.py --clap
   Double clap runs the morning workflow, then listens for a command.
-In text mode, just type the command.
+In text mode, just type.
 
-Commands:
+Local tasks (no key needed):
     time / date
     open chrome | open vs code | open notepad | open calculator
     search <something>          - opens a web search
@@ -21,8 +25,15 @@ Commands:
     timer 5 minutes / timer 30 seconds
     remind me to <thing> in 10 minutes
     note <text>                 - saves to notes.txt
-    help
-    exit / quit
+    research <topic>            - searches the web, brain summarises it
+    find companies hiring data analysts in USA
+    create word / make pdf <title> : <text>
+    morning briefing
+
+Critical actions (submit / send / pay / delete / shutdown / sign in /
+share personal details) are NEVER done silently - Jarvis asks first
+through permissions.py, and even after a yes only the safe part
+(opening the site in your own Chrome) runs. The click stays yours.
 """
 import datetime
 import json
@@ -190,11 +201,47 @@ def handle_command(command):
     cmd = command.strip().lower()
     if not cmd:
         return True
+    # --- v8: answer a pending critical-action question first ---
+    # The proposal already asked ("say yes to go ahead, or no to
+    # stop"), so this yes/no IS the answer - do not ask again.
+    if cmd in ("yes", "y", "yeah", "go ahead", "ok", "okay", "do it", "yes please"):
+        try:
+            from agent import has_pending, confirm_pending
+            if has_pending():
+                _ok, msg = confirm_pending(answer=True)
+                if " __PREP__:" in msg:
+                    note, _, prep = msg.partition(" __PREP__:")
+                    speak(note.strip())
+                    # Safe prep only: open the site in his own Chrome.
+                    # The critical click itself is never run here.
+                    return handle_command("open " + prep.strip())
+                if msg:
+                    speak(msg)
+                return True
+        except Exception:
+            pass
+        speak("I was not waiting for a yes or no. What do you want me to do?")
+        return True
+    if cmd in ("no", "nope", "stop that", "cancel", "don't"):
+        try:
+            from agent import has_pending, cancel_pending
+            if has_pending():
+                cancel_pending()
+                speak("Okay, I stopped. Nothing was sent, submitted, or paid.")
+                return True
+        except Exception:
+            pass
+        # No pending question: "stop" means quit (handled below for "stop").
+        if cmd == "stop":
+            speak("Goodbye.")
+            return False
+        speak("Okay.")
+        return True
     if cmd in ("exit", "quit", "goodbye", "stop"):
         speak("Goodbye.")
         return False
     if cmd == "help":
-        speak("Try: time, date, open chrome, open youtube.com, search python, find companies hiring data analysts in USA, research Anthropic residency program, create word my notes : hello, make pdf my notes : hello, check mail, weather Gainesville, timer 5 minutes, remind me to drink water in 10 minutes, or note buy milk. Or just talk to me normally - ask what is machine learning, how are you, tell me a joke - and my brain will answer. Switch brains with: switch brain to groq, switch brain to gemini, switch brain to cerebras, or switch brain to openrouter. Say list brains to see which ones have a key.")
+        speak("Just talk to me normally. Try: time, what is the weather in Tampa, open youtube for me, research the best data analyst certifications, find companies hiring data analysts in USA, create word my notes : hello, make pdf my notes : hello, timer 5 minutes, remind me to drink water in 10 minutes, or note buy milk. Or ask anything - what is machine learning, how do I learn SQL - and my brain will answer, short and plain. Switch brains with: switch brain to groq, switch brain to gemini, switch brain to cerebras, or switch brain to openrouter. Say list brains to see which ones have a key. Critical steps - submit, send, pay, delete, shut down, sign in - always ask you first, and the click stays yours.")
         return True
     # --- brain switching: talk normally, switch for speed / fallback ---
     if cmd.startswith("switch brain to ") or cmd.startswith("use brain "):
@@ -322,9 +369,10 @@ def handle_command(command):
     if cmd.startswith("research "):
         topic = command.strip()[9:].strip()
         try:
-            from research import research as do_research
-            summary, _filename, err = do_research(topic)
-            speak(err or summary)
+            # v8: search first, then the brain summarises what it found
+            # in short plain words, naming its sources.
+            from agent import research_and_answer
+            speak(research_and_answer(topic))
         except Exception as e:
             speak(f"Could not research that right now: {e}")
         return True
@@ -366,19 +414,23 @@ def handle_command(command):
     if cmd.startswith("ask ") or cmd.startswith("chat "):
         question = command.strip().split(" ", 1)[1].strip()
         try:
-            from brain import ask_gemini
-            answer, err = ask_gemini(question)
+            from brain import ask_brain
+            answer, err = ask_brain(question)
             speak(err or answer)
         except Exception as e:
             speak(f"Brain unavailable: {e}")
         return True
-    # Anything else: ask the Gemini brain, if it is set up.
+    # v8 agent loop: talk normally. The loop decides - chat, research
+    # first, run a PC task, or ask first for a critical step.
+    # Anything it cannot do as a task is answered by the brain.
     try:
-        from brain import ask_gemini
-        answer, err = ask_gemini(command.strip())
-        speak(err or answer)
-    except Exception:
-        speak("I did not understand that. Say help to hear what I can do.")
+        from agent import route
+        if route(command.strip(), handle_command, speak):
+            return True
+    except Exception as e:
+        speak(f"Agent loop unavailable: {e}")
+        return True
+    speak("I did not understand that. Say help to hear what I can do.")
     return True
 
 

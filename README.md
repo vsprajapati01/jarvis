@@ -56,6 +56,58 @@ pulses while it listens, then say your command. Double-click the orb
 to open the full window, drag it anywhere, right-click for Show / Quit.
 Say "show window" to open the full app by voice.
 
+## Jarvis v8 — talk normally, the agent loop decides (agent.py)
+
+You do NOT need a specific command anymore. Just talk to Jarvis
+normally, like ChatGPT or Gemini, and it decides what to do:
+
+- **Chat:** "how are you?", "explain machine learning simply",
+  "how do I learn SQL?" — the brain answers, short and plain,
+  step by step for how-to questions. It remembers the last 6
+  turns, so "tell me more", "make it shorter" and
+  "give me an example" work.
+- **Research first:** "research the best data analyst
+  certifications", "what is the latest on OPT?" — Jarvis
+  searches the web first (research.py), then the brain
+  summarises what it found in short plain words, and says
+  in plain words which sources it used. It does not answer
+  from its own knowledge alone when the facts are current.
+  With no brain key, you still get the real search results.
+- **Do it on your PC:** "open youtube for me",
+  "set a timer for 5 minutes", "make a word document about
+  my week", "find companies hiring data analysts",
+  "give me my morning briefing" — the loop turns plain
+  words into the command Jarvis already knows and runs it.
+  Local tasks need no key. No new PC actions are invented:
+  if Jarvis cannot do it, it says so.
+- **Safety, unchanged:** submit / send / pay / delete /
+  shut down / restart / sign in / share personal details
+  are critical. Jarvis asks you first, through
+  permissions.py ("say yes to go ahead, or no to stop").
+  Even after a yes, only the safe part runs — opening the
+  site in your own Chrome. The submit / send / pay / delete
+  click itself stays yours. Jarvis never stores or types
+  a password.
+
+## Transparent HUD (v8) — see-through, high-tech
+
+The orb and the full window have an empty, transparent
+background, so you see your Windows desktop behind Jarvis.
+Only the HUD parts are visible: the glowing orb, thin neon
+rings, text and buttons.
+
+- Orb: `python jarvis_overlay.py` — always on top, transparent
+  background, rotating neon rings around the orb. Drag the
+  orb itself to move it (the see-through space around it is
+  click-through on Windows). `--no-listen` shows the orb
+  without the microphone, to check the look.
+- Full window: `python jarvis_gui.py` — transparent background
+  by default on Windows. The "👁 Transparent HUD" button in
+  the sidebar switches back to a solid dark background.
+- This uses Windows tkinter `-transparentcolor`. On Linux /
+  macOS it is not supported, so the same code falls back to
+  a solid dark window instead of crashing.
+
 ## Brains (v7) — Gemini, Groq, Cerebras, OpenRouter — all free, switchable
 
 Jarvis now has four free brains, and you can switch between them by voice.

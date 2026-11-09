@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """
-Jarvis Desktop App v3 - AI UI + double-clap wake.
+Jarvis Desktop App v3 - AI UI + double-clap wake, transparent HUD.
 A futuristic AI window: glowing orb, waveform, neon cyan on dark.
+
+The background is transparent / see-through (Windows): the desktop
+shows through, and only the HUD parts are visible - neon buttons,
+the log panel, the entry box, the orb. Use the "Transparent HUD"
+button in the sidebar to switch back to a solid dark background.
+On Linux / macOS transparency is not supported, so it stays solid.
 
 Run on Windows:
     pip install -r requirements.txt
@@ -34,6 +40,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import jarvis as core
 from clap_detector import start_clap_detector
 from morning_workflow import run_morning_workflow
+from transparent_ui import NEON as _NEON  # noqa: F401  (palette lives here)
+from transparent_ui import TRANSPARENT_KEY, make_window_transparent
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 LOGO_PNG = os.path.join(HERE, "logo.png")
@@ -73,7 +81,15 @@ class JarvisApp(tk.Tk):
         super().__init__()
         self.title("JARVIS  •  AI")
         self.geometry("960x640")
-        self.configure(bg=BG)
+        # --- v8 transparent HUD: empty background, desktop shows through.
+        # On Windows, -transparentcolor makes every TRANSPARENT_KEY
+        # pixel see-through. Frames / labels / canvases painted in
+        # that colour disappear; only the HUD parts stay visible -
+        # neon buttons, the log panel, the entry box, the orb.
+        # On Linux / macOS it falls back to a solid dark window.
+        self.transparent = make_window_transparent(self)
+        self.configure(bg=TRANSPARENT_KEY if self.transparent else BG)
+        self._solid_bg = {}  # widget -> its solid background colour
         try:
             self.iconbitmap(os.path.join(HERE, "logo.ico"))
         except Exception:
@@ -116,6 +132,9 @@ class JarvisApp(tk.Tk):
         neon_btn(side, "👏  Double-clap mode", self.toggle_clap).pack(fill="x", padx=16, pady=4)
         neon_btn(side, "🎤  Listen  (say jarvis)", self.listen_voice, bg=NEON2, fg="white").pack(fill="x", padx=16, pady=4)
         neon_btn(side, "☀️  Morning workflow", self.morning, bg=PANEL2, fg=TEXT).pack(fill="x", padx=16, pady=4)
+        self.transparency_btn = neon_btn(side, "👁  Transparent HUD: ON", self.toggle_transparency,
+                                         bg=PANEL2, fg=TEXT)
+        self.transparency_btn.pack(fill="x", padx=16, pady=4)
         self.status = tk.Label(side, text="Ready — clap twice, or type below",
                                font=("Segoe UI", 9), bg=PANEL, fg=DIM, wraplength=190)
         self.status.pack(side="bottom", pady=14)
@@ -180,6 +199,59 @@ class JarvisApp(tk.Tk):
             tk.Button(pc, text=label, font=("Segoe UI", 9), bg=PANEL2, fg=TEXT,
                       relief="flat", padx=8, pady=6, command=fn).grid(
                           row=i // 5, column=i % 5, padx=3, pady=3, sticky="ew")
+
+        # Apply the transparent background now that every widget exists.
+        self._apply_transparency(self.transparent)
+
+    # --- transparent HUD ------------------------------------------------
+    def _apply_transparency(self, on):
+        """Paint empty background areas in the transparent key colour
+        (see-through on Windows) or back to their solid colours.
+        Only Frames, Labels and Canvases are recoloured - Buttons,
+        the log and the entry box stay as solid HUD panels, so the
+        controls stay readable. Never raises."""
+        try:
+            self.configure(bg=TRANSPARENT_KEY if on else BG)
+        except Exception:
+            pass
+        try:
+            self.transparency_btn.config(
+                text="👁  Transparent HUD: ON" if on else "👁  Transparent HUD: OFF")
+        except Exception:
+            pass
+
+        def walk(widget):
+            for child in widget.winfo_children():
+                if isinstance(child, (tk.Frame, tk.Label, tk.Canvas)):
+                    try:
+                        if on:
+                            if child not in self._solid_bg:
+                                self._solid_bg[child] = child.cget("bg")
+                            child.configure(bg=TRANSPARENT_KEY)
+                        else:
+                            if child in self._solid_bg:
+                                child.configure(bg=self._solid_bg[child])
+                    except Exception:
+                        pass
+                walk(child)
+
+        try:
+            walk(self)
+        except Exception:
+            pass
+
+    def toggle_transparency(self):
+        """Switch the see-through background on / off. If Windows
+        transparency is not available, it says so and stays solid."""
+        want = not self.transparent
+        if want:
+            if not make_window_transparent(self):
+                self.say("Transparency is not supported on this PC - staying solid.")
+                return
+        self.transparent = want
+        self._apply_transparency(want)
+        self.say("Transparent HUD on - the desktop shows through."
+                 if want else "Solid background back on.")
 
     # --- AI orb / waveform animation ---
     def _animate_orb(self):

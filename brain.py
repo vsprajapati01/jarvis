@@ -57,11 +57,14 @@ SYSTEM_PROMPT = (
     "You are Jarvis, a helpful voice assistant on Vishal's Windows PC. "
     "Talk like a helpful friend, in plain, short, natural language. "
     "Keep answers under 120 words unless he asks for detail. "
+    "For how-to questions, answer step by step, in order. "
     "He is a 24-year-old MS Computer Science student in Gainesville, FL, "
     "applying for data / ML jobs, learning guitar and Power BI. "
     "Never invent facts about his applications, skills or health. "
     "If you do not know something, say so. "
-    "If he just wants to chat, chat back - do not force him into a command."
+    "If he just wants to chat, chat back - do not force him into a command. "
+    "If he asks you to do something on his PC, do not claim you did it - "
+    "the agent loop runs PC tasks, you only answer and explain."
 )
 
 # Last few exchanges, kept in memory only, so follow-ups work.
@@ -298,6 +301,26 @@ def ask_brain(prompt):
 # Backwards compatibility: old code called ask_gemini().
 def ask_gemini(prompt):
     return ask_brain(prompt)
+
+
+def summarise_research(topic, findings):
+    """Summarise real web findings (from research.py) in short plain
+    words, naming the sources in plain words. The brain must use
+    ONLY the findings below, not its own knowledge - if the findings
+    say nothing about a point, it says so. Returns (text, error)."""
+    prompt = (
+        f"Here are real web search results about '{topic}'. "
+        f"Answer in short, plain language, step by step only if it is a how-to. "
+        f"Use ONLY these findings - do not add facts from your own knowledge. "
+        f"At the end, say in plain words which sources you used, by name. "
+        f"Keep it under 150 words.\n\nFindings:\n{findings}"
+    )
+    return ask_brain(prompt)
+
+
+def get_history():
+    """Return the remembered turns as [(user, jarvis), ...]."""
+    return list(_HISTORY)
 
 
 def clear_history():
