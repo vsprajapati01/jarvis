@@ -194,7 +194,58 @@ def handle_command(command):
         speak("Goodbye.")
         return False
     if cmd == "help":
-        speak("Try: time, date, open chrome, open youtube.com, search python, find companies hiring data analysts in USA, research Anthropic residency program, create word my notes : hello, make pdf my notes : hello, check mail, weather Gainesville, timer 5 minutes, remind me to drink water in 10 minutes, or note buy milk. Or just ask me anything - ask what is machine learning - and my Gemini brain will answer.")
+        speak("Try: time, date, open chrome, open youtube.com, search python, find companies hiring data analysts in USA, research Anthropic residency program, create word my notes : hello, make pdf my notes : hello, check mail, weather Gainesville, timer 5 minutes, remind me to drink water in 10 minutes, or note buy milk. Or just talk to me normally - ask what is machine learning, how are you, tell me a joke - and my brain will answer. Switch brains with: switch brain to groq, switch brain to gemini, switch brain to cerebras, or switch brain to openrouter. Say list brains to see which ones have a key.")
+        return True
+    # --- brain switching: talk normally, switch for speed / fallback ---
+    if cmd.startswith("switch brain to ") or cmd.startswith("use brain "):
+        name = cmd.replace("switch brain to ", "").replace("use brain ", "").strip()
+        name = {"open router": "openrouter"}.get(name, name)
+        try:
+            from brain import set_provider, get_provider, list_providers
+            if set_provider(name):
+                providers = dict((p[0], p) for p in list_providers())
+                has_key = providers[name][2]
+                if has_key:
+                    speak(f"Switched to {providers[name][1]}. Talk to me normally now.")
+                else:
+                    speak(f"Switched to {providers[name][1]}, but I do not have a key for it yet in .env, so I will fall back to another brain until you add one.")
+            else:
+                speak("I know gemini, groq, cerebras and openrouter. Say switch brain to groq, for example.")
+        except Exception as e:
+            speak(f"Could not switch brain: {e}")
+        return True
+    if cmd in ("list brains", "show brains", "brain status", "which brain"):
+        try:
+            from brain import list_providers
+            parts = []
+            for name, label, has_key, selected in list_providers():
+                mark = " (current)" if selected else ""
+                key = "key saved" if has_key else "no key yet"
+                parts.append(f"{label}{mark} - {key}")
+            speak("Brains: " + "; ".join(parts) + ". Switch with: switch brain to groq.")
+        except Exception as e:
+            speak(f"Could not list brains: {e}")
+        return True
+    if cmd in ("clear chat", "forget chat", "new chat"):
+        try:
+            from brain import clear_history
+            clear_history()
+            speak("Okay, fresh chat. What do you want to talk about?")
+        except Exception:
+            speak("Okay, fresh chat.")
+        return True
+    if cmd.startswith("talk ") or cmd.startswith("chat ") or cmd.startswith("ask "):
+        # "talk <anything>" is just normal conversation - send it to the brain.
+        question = command.strip().split(" ", 1)[1].strip() if " " in command.strip() else ""
+        if not question:
+            speak("I am listening. Just talk to me normally.")
+            return True
+        try:
+            from brain import ask_brain
+            answer, err = ask_brain(question)
+            speak(err or answer)
+        except Exception as e:
+            speak(f"Brain unavailable: {e}")
         return True
     # Timer / reminder first: "timer" contains "time", so check it before time.
     if cmd.startswith("timer"):

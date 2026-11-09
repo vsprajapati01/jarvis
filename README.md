@@ -56,6 +56,38 @@ pulses while it listens, then say your command. Double-click the orb
 to open the full window, drag it anywhere, right-click for Show / Quit.
 Say "show window" to open the full app by voice.
 
+## Brains (v7) — Gemini, Groq, Cerebras, OpenRouter — all free, switchable
+
+Jarvis now has four free brains, and you can switch between them by voice.
+You do NOT need a specific command to talk to Jarvis anymore — just talk
+normally. Anything that is not a local command (time, weather, open, timer,
+find companies...) goes to the brain, and Jarvis remembers the last few
+turns, so follow-ups like "tell me more" work.
+
+1. Copy `.env.example` to `.env` in the jarvis folder.
+2. Add at least one free key — Gemini is easiest:
+   - Gemini: https://aistudio.google.com — Get API key
+   - Groq (fastest): https://console.groq.com — API Keys
+   - Cerebras (fast, 1M free tokens/day): https://cloud.cerebras.ai — API Keys
+   - OpenRouter (free models): https://openrouter.ai — Keys
+   Never paste a key in chat, and never push `.env` — it is in `.gitignore`.
+3. Restart the orb or the full app. Then just talk:
+   `how are you?`, `explain machine learning simply`, `tell me more`.
+
+Switch brains any time, by voice or text:
+```
+switch brain to groq
+switch brain to gemini
+switch brain to cerebras
+switch brain to openrouter
+list brains
+brain status
+```
+The choice is saved in `config.json`, so it sticks after a restart.
+If the brain you picked is down, limited, or has no key, Jarvis
+automatically falls back to the next brain that has a key, and tells
+you which one answered. `clear chat` starts a fresh conversation.
+
 ## Gemini brain (v6) — ask anything, free
 
 Jarvis now has a brain: Google Gemini, free API.
