@@ -56,6 +56,39 @@ pulses while it listens, then say your command. Double-click the orb
 to open the full window, drag it anywhere, right-click for Show / Quit.
 Say "show window" to open the full app by voice.
 
+## Jarvis v10 — multi-agent, clean text mode (agents.py, jarvis_v10.py)
+
+No orb, no GUI, no neon, no HUD. Plain text only, clean and simple.
+
+Three small agents, one shared memory (`memory.py`, local `memory.json`):
+- **Finder** — find companies / businesses for a query, using research.py.
+- **Website** — build a clean, one-page static website (`website_builder.py`).
+  White, dark text, system font, no JavaScript, no animations, no photos,
+  max 6 menu items. Output: `websites/<slug>/index.html`.
+- **Email** — draft a short outreach email, saved to `drafts/`. Draft only,
+  never sent. You read it, edit it, send it yourself.
+
+Run it:
+```bash
+python jarvis_v10.py
+# jarvis> build website for Ember and Salt in Brickell, Miami - A small restaurant. Simple food, deep flavour.
+# jarvis> find companies hiring data analysts in Florida
+# jarvis> draft email for Ember and Salt
+# jarvis> memory
+# jarvis> quit
+```
+
+Test it (no network, no sending):
+```bash
+python test_v10.py
+# All v10 tests passed.
+```
+
+Safety, unchanged: submit / send / pay / delete / shut down / sign in /
+share personal details are critical. The team never does them. Email
+drafts are files only, and the submit / send click stays yours.
+Jarvis never stores or types a password.
+
 ## Jarvis v9 — PC control: touch anything, keyboard + mouse (pc_control.py)
 
 Jarvis can now control the whole PC when you tell him to touch
