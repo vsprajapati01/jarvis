@@ -439,10 +439,21 @@ def listen_voice():
         speak("Voice listening needs the speechrecognition library. Run in text mode instead: python jarvis.py --text")
         return None
     r = sr.Recognizer()
-    with sr.Microphone() as source:
-        print("Listening...")
-        r.adjust_for_ambient_noise(source, duration=0.5)
-        audio = r.listen(source, timeout=10, phrase_time_limit=10)
+    try:
+        with sr.Microphone() as source:
+            print("Listening...")
+            r.adjust_for_ambient_noise(source, duration=0.5)
+            try:
+                audio = r.listen(source, timeout=10, phrase_time_limit=10)
+            except sr.WaitTimeoutError:
+                # No speech in 10 seconds. Not a crash - just listen again.
+                print("No speech heard, listening again...")
+                return ""
+    except Exception as e:
+        print(f"Microphone unavailable: {e}")
+        print("Check Windows Settings > Sound > Input, then try again.")
+        print("Or run text mode: python jarvis.py --text")
+        return None
     try:
         return r.recognize_google(audio)
     except Exception:
