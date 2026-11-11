@@ -56,6 +56,41 @@ pulses while it listens, then say your command. Double-click the orb
 to open the full window, drag it anywhere, right-click for Show / Quit.
 Say "show window" to open the full app by voice.
 
+## Jarvis v9 — PC control: touch anything, keyboard + mouse (pc_control.py)
+
+Jarvis can now control the whole PC when you tell him to touch
+something. Chrome first, watched, with a stop word.
+
+- **Exact mode:** "type Dear Hiring Manager, I am Vishal",
+  "search Data Analyst jobs in Florida", "open chrome to linkedin.com"
+  — he does exactly that, no extra words, no extra clicks.
+- **General mode:** "open Chrome and search for Data Analyst jobs"
+  — he plans the steps, checks the screen, reports back.
+- **Stop:** say "jarvis stop" / "stop" — mouse + keyboard stop
+  immediately, no finishing the step. PyAutoGUI failsafe:
+  mouse to a screen corner also stops it. Your own keyboard
+  + mouse stay plugged in as backup.
+- **Power BI:** v1 opens Power BI and types in it as you dictate.
+  It does NOT click-drag visuals yet — that is v2, after testing.
+  He cleans data in Python, writes M / DAX for you to paste,
+  and types the DAX as you say.
+- **Critical clicks:** Submit / Send / Pay / Delete /
+  Close-without-saving still ask first, through permissions.py.
+  He never types a password.
+
+Test it safely first, dry-run only, real mouse never moves:
+```bash
+python test_pc_control.py
+# All pc_control tests passed. Dry-run only, real mouse never moved.
+```
+
+Go live on Windows only, screen on, after that test:
+```bash
+pip install -r requirements.txt
+# in pc_control.py / agent.py, PCControl(dry_run=False)
+# Watch the screen the first 10 times for every new app.
+```
+
 ## Jarvis v8 — talk normally, the agent loop decides (agent.py)
 
 You do NOT need a specific command anymore. Just talk to Jarvis

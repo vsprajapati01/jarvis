@@ -403,6 +403,22 @@ def route(text, execute_fn, speak_fn):
     True to keep listening. speak_fn(text) speaks/prints.
     Returns True if handled (jarvis.py should not fall through to
     the old brain fallback), False if not handled."""
+    # v9: PC control first - type / search / open Chrome / stop.
+    # This is the "touch anything" layer: keyboard + mouse, watched.
+    try:
+        from pc_control import PCControl, handle_pc_command
+        _pc = getattr(route, "_pc", None)
+        if _pc is None:
+            # Dry-run by default here - live only on his Windows PC
+            # with the screen on, after he says go live.
+            _pc = PCControl(dry_run=True)
+            route._pc = _pc
+        handled, reply = handle_pc_command(text, _pc)
+        if handled:
+            speak_fn(reply)
+            return True
+    except Exception:
+        pass
     kind, data = classify(text)
     if kind == "critical":
         speak_fn(propose_critical(text))
