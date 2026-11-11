@@ -196,9 +196,50 @@ def parse_duration(text):
     return n
 
 
+def _slugify(text):
+    return re.sub(r"[^a-z0-9]+", "-", text.strip().lower()).strip("-")
+
+
+def _find_file(folder, name):
+    """Find a file in folder by name, with fuzzy matching for
+    misheard names like 'Amber and soul' for 'Ember and Salt'.
+    Returns the full path, or None."""
+    if not os.path.isdir(folder):
+        return None
+    files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
+    if not files:
+        return None
+    slug = _slugify(name)
+    for f in files:
+        if slug in _slugify(os.path.splitext(f)[0]):
+            return os.path.join(folder, f)
+    # Fuzzy match on the file stem, e.g. ember-and-salt vs amber-and-soul.
+    import difflib
+    stems = [os.path.splitext(f)[0] for f in files]
+    match = difflib.get_close_matches(slug, stems, n=1, cutoff=0.5)
+    if match:
+        return os.path.join(folder, match[0] + os.path.splitext(files[stems.index(match[0])])[1])
+    return None
+
+
+def _open_local_file(path):
+    """Open a local file with its normal app. Returns True if opened."""
+    try:
+        if platform.system() == "Windows":
+            os.startfile(path)  # noqa: S606 - local file the user asked for
+        elif platform.system() == "Darwin":
+            subprocess.Popen(["open", path])
+        else:
+            subprocess.Popen(["xdg-open", path])
+        return True
+    except Exception:
+        return False
+
+
 def handle_command(command):
     """Return False to quit, True to keep listening."""
     cmd = command.strip().lower()
+    cmd = re.sub(r"^please\s+", "", cmd)
     if not cmd:
         return True
     # --- v8: answer a pending critical-action question first ---
@@ -391,13 +432,57 @@ def handle_command(command):
     if cmd in ("date", "what is the date", "what day is it"):
         speak("Today is " + datetime.datetime.now().strftime("%A, %B %d, %Y") + ".")
         return True
+    if re.match(r"^open (the )?draft\b", cmd):
+        name = re.sub(r"^open (the )?draft( of| for)?\s*", "", cmd).strip()
+        if not name:
+            speak("Which draft? Say: open draft of Ember and Salt.")
+            return True
+        base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "drafts")
+        path = _find_file(base, name)
+        if not path:
+            speak(f"I could not find a draft for {name}. Check the drafts folder, or build one first with jarvis_v10.py.")
+            return True
+        if _open_local_file(path):
+            speak(f"Opening the draft for {name}.")
+        else:
+            speak(f"Draft found, but I could not open it. It is at {path}.")
+        return True
+    if re.match(r"^open (the )?website\b", cmd):
+        name = re.sub(r"^open (the )?website( of| for)?\s*", "", cmd).strip()
+        if not name:
+            speak("Which website? Say: open website for Ember and Salt.")
+            return True
+        base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "websites")
+        # Websites are folders: find the folder, then its index.html.
+        folder = None
+        if os.path.isdir(base):
+            for d in os.listdir(base):
+                full = os.path.join(base, d)
+                if os.path.isdir(full) and _slugify(name) in d:
+                    folder = full
+                    break
+            if folder is None:
+                import difflib
+                folders = [d for d in os.listdir(base) if os.path.isdir(os.path.join(base, d))]
+                match = difflib.get_close_matches(_slugify(name), folders, n=1, cutoff=0.5)
+                if match:
+                    folder = os.path.join(base, match[0])
+        if not folder:
+            speak(f"I could not find a website for {name}. Build one first with jarvis_v10.py.")
+            return True
+        path = os.path.join(folder, "index.html")
+        if os.path.exists(path) and _open_local_file(path):
+            speak(f"Opening the website for {name}.")
+        else:
+            speak(f"Website found, but I could not open it. It is at {path}.")
+        return True
     if cmd.startswith("open "):
         rest = cmd[5:].strip()
         # "open chrome" / "open vs code" are apps; anything else is a website.
         if rest in ("chrome", "vs code", "notepad", "calculator"):
             speak(open_app(rest))
         else:
-            speak(open_website(command.strip()[5:].strip()))
+            speak(open_website(cmd[5:].strip()))
         return True
     if cmd.startswith("go to "):
         speak(open_website(command.strip()[6:].strip()))
@@ -496,13 +581,31 @@ def main():
         if not heard:
             continue
         print(f"Heard: {heard}")
-        if WAKE_WORD in heard.lower():
+        low = heard.lower().strip()
+        # "jarvis open draft of Ember and Salt" in one breath: run it now.
+        if WAKE_WORD in low:
+            after = low.split(WAKE_WORD, 1)[1].strip(" ,.")
+            if after:
+                print(f"Command: {after}")
+                if not handle_command(after):
+                    break
+                continue
             speak("Yes?")
             command = listen_voice()
             if command:
                 print(f"Command: {command}")
                 if not handle_command(command):
                     break
+            continue
+        # No wake word, but a clear command like "open the draft of..."
+        # Do not ignore it silently - run it, and say so.
+        if re.match(r"^(please\s+)?(open|show|find|search|build|draft|make|create|weather|timer|remind|note|time|date|help|quit|exit|stop)\b", low):
+            speak("Heard you, running that now.")
+            if not handle_command(heard):
+                break
+            continue
+        # Anything else without "jarvis": say so, instead of silence.
+        speak("I heard you, but I only act after you say jarvis. Say jarvis, then your command.")
 
 
 if __name__ == "__main__":
